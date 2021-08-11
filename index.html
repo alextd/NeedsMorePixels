@@ -1,0 +1,177 @@
+<html>
+<head>
+    <style>
+canvas {
+		//All these seem pointless but whatever
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -o-crisp-edges;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+		border: 2px solid black;
+}
+    </style>
+</head>
+<body>
+<div>
+<center>
+<h1>Needs More Pixels</h1>
+	<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL" autofocus>
+	<button onclick="GO()">GO</button>
+	<input type="range" min="1" max="10" value="1" class="slider" id="myRange">
+	<br>
+	<canvas id="canvas" width="800" height="600" onclick="pixelateNext()"></canvas>
+</center>
+<p style="white-space: pre-line">
+(The game from Um, Actually)
+Slider arrow keys control steps. Click image to step next.
+Paste in image url to play new game.
+Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
+</p>
+</div>
+<script>
+var url = document.getElementById("urlIn");
+var slider = document.getElementById("myRange");
+var canvas = document.getElementById('canvas');
+
+function clearURL(event){
+    	event.target.setSelectionRange(0, this.text.length);
+    }
+
+// Chunks of this code:
+// (C) Ken Fyrstenberg, Epistemex, License: CC3.0-attr
+var ctx = canvas.getContext('2d'),
+    img = new Image();
+
+// turn off image smoothing - this will give the pixelated effect
+function setSmooth(on)
+{
+	ctx.mozImageSmoothingEnabled = on;
+	ctx.webkitImageSmoothingEnabled = on ;
+	ctx.imageSmoothingEnabled = on;
+}
+
+// wait until image is actually available
+img.onload = start;
+//img.onerror = function() {console.log("err")}//Still spams console oh well
+//img.onabort = function() {console.log("abort")}
+
+//Figure out scaling:
+var w = 800;
+var h = 600;
+var scale = 1;
+var dx = 0, dy = 0;
+function start()
+{
+	ctx.drawImage(img, 0, 0, img.width, img.height);
+	ctx.clearRect(0, 0, 800, 600);
+	w = img.width;
+	h = img.height;
+	if(w/h > 4/3)
+	{	//wider
+		scale = 800/w;
+		h = Math.floor(h*scale);
+		w = 800;
+		dx = 0;
+		dy = Math.floor((600-h)/2);
+	}
+	else
+	{ //taller
+		scale = 600/h;
+		w = Math.floor(w*scale);
+		h = 600;
+		dy = 0;
+		dx = Math.floor((800-w)/2);
+	}
+	pixelateFirst();
+}
+
+
+img.src = 'http://pixel.nymag.com/imgs/daily/vulture/2016/08/11/11-obama-sex-playlist.w529.h529.jpg';
+
+function pixelateCur()		{	pixelate(slider.value)}
+function pixelate(x) {
+	console.log(ctx)
+	ctx.clearRect(0, 0, 800, 600);
+	if(x == 10)
+	{
+		setSmooth(true);
+		ctx.drawImage(img, dx, dy, img.width*scale, img.height*scale);
+		return;
+	}
+
+	var pixelatedW = 6-x+x*x,
+	    pixelatedH = h * pixelatedW/h;
+
+	setSmooth(true);//Smoother down-sampling for more consistent image I think
+	// draw original image to the scaled size
+	ctx.drawImage(img, dx, dy, pixelatedW, pixelatedH);
+
+	setSmooth(false);//Pixelated up-scaling
+	// then draw that scaled image thumb back to fill canvas
+	// As smoothing is off the result will be pixelated
+	ctx.drawImage(canvas, dx, dy, pixelatedW, pixelatedH, dx, dy, w, h);
+}
+
+GO = function() {
+	img.src = urlIn.value;
+	urlIn.value = "";
+}
+
+slider.oninput = function() {
+	pixelateCur();
+}
+
+//Some keyboard commands:
+
+//Paste
+/*
+window.addEventListener('paste', (event) => {
+    console.log('paste action initiated')
+		console.log(event.originalEvent.clipboardData)
+});
+*/
+
+//Enter Key:
+document.querySelector("#urlIn").addEventListener("keyup", event => {
+    if(event.key !== "Enter") return; // Use `.key` instead.
+    GO(); // Things you want to do.
+    event.preventDefault(); // No need to `return false;`.
+});
+
+//Arrow Keys:
+document.onkeydown = checkKey;
+
+function checkKey(e) {
+
+    e = e || window.event;
+
+    if (e.keyCode == '38') {
+			pixelateFirst(); event.preventDefault();
+        // up arrow
+    }
+    else if (e.keyCode == '40') {
+			pixelateLast(); event.preventDefault();
+        // down arrow
+    }
+    else if (e.keyCode == '37') {
+			pixelatePrev(); event.preventDefault();
+       // left arrow
+    }
+    else if (e.keyCode == '39') {
+			pixelateNext(); event.preventDefault();
+       // right arrow
+    }
+
+}
+
+function pixelateFirst()	{	slider.value = 1;pixelateCur()}
+function pixelateLast()		{	slider.value = 10;pixelateCur()}
+function pixelatePrev()		{	slider.value --;pixelateCur()}
+function pixelateNext()		{	slider.value ++ ;pixelateCur()}
+
+
+</script>
+</body>
+</html>
