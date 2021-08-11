@@ -1,7 +1,20 @@
 <html>
 <head>
     <style>
+html,body{
+	position: relative; 
+    margin:0;
+    height:100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+::-webkit-scrollbar {
+  display: none;
+}
 canvas {
+    margin:0;
 		//All these seem pointless but whatever
     image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
@@ -9,40 +22,86 @@ canvas {
     image-rendering: -o-crisp-edges;
     image-rendering: crisp-edges;
     -ms-interpolation-mode: nearest-neighbor;
-		border: 2px solid black;
+}
+
+.container
+{
+  background: #000;
+  position:relative;
+  height:100%;
+  width:100%;
+  margin:0 auto;
+	}
+
+.container img {
+  position:absolute;
+  left:0;
+  -webkit-transition: opacity 1s ease-in-out;
+  -moz-transition: opacity 1s ease-in-out;
+  -o-transition: opacity 1s ease-in-out;
+  transition: opacity 1s ease-in-out;
+}
+
+.container img:hover {
+  opacity:0;
 }
     </style>
 </head>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+
+
+
 <body>
 <div>
 <center>
+<div class="container">
+<canvas id="canvas" width="100" height="100" onclick="pixelateNext()"></canvas></div>
+<input type="range" min="1" max="10" value="1" class="slider" id="myRange"><br>
+<input type="file" name="media_file" id="fileIn" accept="image/*" width=300><br>
+<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
+<button onclick="URLGO()">GO</button><br>
 <h1>Needs More Pixels</h1>
-	<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL" autofocus>
-	<button onclick="GO()">GO</button>
-	<input type="range" min="1" max="10" value="1" class="slider" id="myRange">
-	<br>
-	<canvas id="canvas" width="800" height="600" onclick="pixelateNext()"></canvas>
-</center>
 <p style="white-space: pre-line">
-(The game from Um, Actually)
-Slider arrow keys control steps. Click image to step next.
-Paste in image url to play new game.
+(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
+Click image to step to the next clearer image.
+Arrow keys also work: up to start, down to end, left/right step one by one.
+Select a local image, or paste a URL to play new game.
+
 Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
 </p>
+</center>
 </div>
 <script>
 var url = document.getElementById("urlIn");
+var file = document.getElementById("fileIn");
 var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
 
-function clearURL(event){
-    	event.target.setSelectionRange(0, this.text.length);
-    }
+addEventListener("load", function() {
+    window.scrollTo(1, 0);
+}, false);
 
 // Chunks of this code:
 // (C) Ken Fyrstenberg, Epistemex, License: CC3.0-attr
 var ctx = canvas.getContext('2d'),
     img = new Image();
+// wait until image is actually available
+img.onload = start;
+
+// resize the canvas to fill browser window dynamically
+window.addEventListener('resize', resizeCanvas, false);
+			
+function resizeCanvas() {
+	canvas.width = window.innerWidth
+	canvas.height = window.innerHeight
+
+	findScale();
+	pixelateCur(); 
+}
+
+
 
 // turn off image smoothing - this will give the pixelated effect
 function setSmooth(on)
@@ -52,39 +111,44 @@ function setSmooth(on)
 	ctx.imageSmoothingEnabled = on;
 }
 
-// wait until image is actually available
-img.onload = start;
+function start()
+{
+  document.body.scrollTop = 0; // For Safari
+  document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+	
+	resizeCanvas();
+	findScale();
+	pixelateFirst();
+}
 //img.onerror = function() {console.log("err")}//Still spams console oh well
 //img.onabort = function() {console.log("abort")}
 
 //Figure out scaling:
-var w = 800;
-var h = 600;
+var w = canvas.width;
+var h = canvas.height;
 var scale = 1;
 var dx = 0, dy = 0;
-function start()
+
+function findScale()
 {
-	ctx.drawImage(img, 0, 0, img.width, img.height);
-	ctx.clearRect(0, 0, 800, 600);
 	w = img.width;
 	h = img.height;
-	if(w/h > 4/3)
+	if(w/h > canvas.width/canvas.height)
 	{	//wider
-		scale = 800/w;
+		scale = canvas.width/w;
 		h = Math.floor(h*scale);
-		w = 800;
+		w = canvas.width;
 		dx = 0;
-		dy = Math.floor((600-h)/2);
+		dy = Math.floor((canvas.height-h)/2);
 	}
 	else
 	{ //taller
-		scale = 600/h;
+		scale = canvas.height/h;
 		w = Math.floor(w*scale);
-		h = 600;
+		h = canvas.height;
 		dy = 0;
-		dx = Math.floor((800-w)/2);
+		dx = Math.floor((canvas.width-w)/2);
 	}
-	pixelateFirst();
 }
 
 
@@ -92,7 +156,7 @@ img.src = 'http://pixel.nymag.com/imgs/daily/vulture/2016/08/11/11-obama-sex-pla
 
 function pixelateCur()		{	pixelate(slider.value)}
 function pixelate(x) {
-	ctx.clearRect(0, 0, 800, 600);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	if(x == 10)
 	{
 		setSmooth(true);
@@ -113,15 +177,36 @@ function pixelate(x) {
 	ctx.drawImage(canvas, dx, dy, pixelatedW, pixelatedH, dx, dy, w, h);
 }
 
-GO = function() {
+URLGO = function() {
 	img.src = urlIn.value;
 	urlIn.value = "";
 }
 
+file.onchange = function(e) { 
+ var tgt = e.target || window.event.srcElement;
+ var files = tgt.files;
+
+	// FileReader support
+	if (FileReader && files && files.length) {
+		var fr = new FileReader();
+		fr.onload = function () {
+			img.src = fr.result;
+			file.value = ""
+		}
+		fr.readAsDataURL(files[0]);
+	}
+
+	// Not supported
+	else {
+			// fallback -- perhaps submit the input to an iframe and temporarily store
+			// them on the server until the user's session ends.
+	}
+			
+};
+
 slider.oninput = function() {
 	pixelateCur();
 }
-
 //Some keyboard commands:
 
 //Paste
@@ -135,7 +220,7 @@ window.addEventListener('paste', (event) => {
 //Enter Key:
 document.querySelector("#urlIn").addEventListener("keyup", event => {
     if(event.key !== "Enter") return; // Use `.key` instead.
-    GO(); // Things you want to do.
+    URLGO(); // Things you want to do.
     event.preventDefault(); // No need to `return false;`.
 });
 
@@ -171,6 +256,8 @@ function pixelatePrev()		{	slider.value --;pixelateCur()}
 function pixelateNext()		{	slider.value ++ ;pixelateCur()}
 
 
+
+resizeCanvas();
 </script>
 </body>
 </html>
