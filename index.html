@@ -104,6 +104,7 @@ function resizeCanvas() {
 
 
 // turn off image smoothing - this will give the pixelated effect
+ctx.imageSmoothingQuality  = "high"
 function setSmooth(on)
 {
 	ctx.mozImageSmoothingEnabled = on;
