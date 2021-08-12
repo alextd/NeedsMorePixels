@@ -164,17 +164,29 @@ function pixelate(x) {
 		return;
 	}
 
-	var pixelatedW = 6-x+x*x,
-	    pixelatedH = h * pixelatedW/h;
-
-	setSmooth(true);//Smoother down-sampling for more consistent image I think
+	var pixelatedH = 6-x+x*x,
+	    pixelatedW = w * pixelatedH/h;
+	if(h>w)
+	{
+		//taller than square
+		pixelatedW = 6-x+x*x,
+		pixelatedH = h * pixelatedW/w;
+	}
+	
+	setSmooth(true);//Smoother down-sampling for more consistent coloring I think
 	// draw original image to the scaled size
-	ctx.drawImage(img, dx, dy, pixelatedW, pixelatedH);
-
+	// Minor stretching from ceil() shouldn't be noticable with the pixelation
+	ctx.drawImage(img, dx, dy, Math.ceil(pixelatedW), Math.ceil(pixelatedH))
+	
 	setSmooth(false);//Pixelated up-scaling
+	
+	//Nudge for a tiny pixel overflow
+	var nudgeX = pixelatedW%1 > 0 ? (1-(pixelatedW%1))/2 : 0
+	var nudgeY = pixelatedH%1 > 0 ? (1-(pixelatedH%1))/2 : 0
+
 	// then draw that scaled image thumb back to fill canvas
 	// As smoothing is off the result will be pixelated
-	ctx.drawImage(canvas, dx, dy, pixelatedW, pixelatedH, dx, dy, w, h);
+	ctx.drawImage(canvas, dx+nudgeX, dy+nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
 }
 
 URLGO = function() {
