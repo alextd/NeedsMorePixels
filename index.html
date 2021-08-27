@@ -72,7 +72,7 @@ canvas {
 
 	Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
 	</p>
-	<text id="xsize"></text>x<text id="ysize"></text> pixels!
+	<text id="xsize"></text>x<text id="ysize"></text> pixels! Ratio = <text id="ratio"></text>
 	</center>
 </div>
 <script>
@@ -82,6 +82,7 @@ var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
 var xsize = document.getElementById('xsize');
 var ysize = document.getElementById('ysize');
+var ratio = document.getElementById('ratio');
 
 addEventListener("load", function() {
     window.scrollTo(1, 0);
@@ -102,6 +103,7 @@ function resizeCanvas() {
 	canvas.height = window.innerHeight
 	xsize.innerHTML = canvas.width
 	ysize.innerHTML = canvas.height
+	ratio.innerHTML = window.devicePixelRatio || 1
 
 	findScale();
 	pixelateCur(); 
