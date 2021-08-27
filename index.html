@@ -92,14 +92,6 @@ addEventListener("load", function() {
 // (C) Ken Fyrstenberg, Epistemex, License: CC3.0-attr
 var ctx = canvas.getContext('2d'),
     img = new Image();
-//For mobile screens where a pixel isn't a pixel:
-//https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
-// Set actual size in memory (scaled to account for extra pixel density).
-var pxScale = 10; // Change to 1 on retina screens to see blurry canvas.
-
-// Normalize coordinate system to use css pixels.
-ctx.scale(pxScale, pxScale);
-	
 // wait until image is actually available
 img.onload = start;
 
@@ -107,8 +99,8 @@ img.onload = start;
 window.addEventListener('resize', resizeCanvas, false);
 			
 function resizeCanvas() {
-	canvas.width = Math.floor(window.innerWidth * pxScale);
-	canvas.height = Math.floor(window.innerHeight * pxScale);
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
 
 	xsize.innerHTML = canvas.width
 	ysize.innerHTML = canvas.height
@@ -152,20 +144,20 @@ function findScale()
 	w = img.width;
 	h = img.height;
 	if(w/h > canvas.width/canvas.height)
-	{	//wider
+	{	//canvas is taller 
 		imScale = canvas.width/w;
 		h = Math.floor(h*imScale);
 		w = canvas.width;
 		dx = 0;
-		dy = Math.floor((canvas.height-h)/2) / pxScale;
+		dy = Math.floor((canvas.height-h)/2);
 	}
 	else
-	{ //taller
+	{ //image is taller
 		imScale = canvas.height/h;
 		w = Math.floor(w*imScale);
 		h = canvas.height;
 		dy = 0;
-		dx = Math.floor((canvas.width-w)/2) / pxScale;
+		dx = Math.floor((canvas.width-w)/2);
 	}
 }
 
@@ -178,7 +170,7 @@ function pixelate(x) {
 	if(x == 10)
 	{
 		setSmooth(true);
-		ctx.drawImage(img, dx, dy, img.width*imScale / pxScale, img.height*imScale / pxScale);
+		ctx.drawImage(img, dx, dy, img.width*imScale, img.height*imScale);
 		return;
 	}
 
@@ -204,7 +196,7 @@ function pixelate(x) {
 
 	// then draw that scaled image thumb back to fill canvas
 	// As smoothing is off the result will be pixelated
-	ctx.drawImage(canvas, dx+nudgeX, dy+nudgeY, pixelatedW, pixelatedH, dx, dy, w / pxScale, h / pxScale);
+	ctx.drawImage(canvas, dx+nudgeX, dy+nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
 }
 
 URLGO = function() {
