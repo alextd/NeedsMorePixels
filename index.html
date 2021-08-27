@@ -55,29 +55,33 @@ canvas {
 
 <body>
 <div>
-<center>
-<div class="container">
-<canvas id="canvas" width="100" height="100" onclick="pixelateNext()"></canvas></div>
-<input type="range" min="1" max="10" value="1" class="slider" id="myRange" style="width:95%"><br>
-<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
-<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
-<button onclick="URLGO()">GO</button><br>
-<h1>Needs More Pixels</h1>
-<p style="white-space: pre-line">
-(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
-Click image to step to the next clearer image.
-Arrow keys also work: up to start, down to end, left/right step one by one.
-Select a local image, or paste a URL to play new game.
+	<center>
+	<div class="container">
+		<canvas id="canvas" width="100" height="100" onclick="pixelateNext()"></canvas>
+	</div>
+	<input type="range" min="1" max="10" value="1" class="slider" id="myRange" style="width:95%"><br>
+	<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
+	<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
+	<button onclick="URLGO()">GO</button><br>
+	<h1>Needs More Pixels</h1>
+	<p style="white-space: pre-line">
+	(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
+	Click image to step to the next clearer image.
+	Arrow keys also work: up to start, down to end, left/right step one by one.
+	Select a local image, or paste a URL to play new game.
 
-Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
-</p>
-</center>
+	Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
+	</p>
+	<text id="xsize"></text>x<text id="ysize"></text> pixels!
+	</center>
 </div>
 <script>
 var url = document.getElementById("urlIn");
 var file = document.getElementById("fileIn");
 var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
+var xsize = document.getElementById('xsize');
+var ysize = document.getElementById('ysize');
 
 addEventListener("load", function() {
     window.scrollTo(1, 0);
@@ -96,6 +100,8 @@ window.addEventListener('resize', resizeCanvas, false);
 function resizeCanvas() {
 	canvas.width = window.innerWidth
 	canvas.height = window.innerHeight
+	xsize.innerHTML = canvas.width
+	ysize.innerHTML = canvas.height
 
 	findScale();
 	pixelateCur(); 
