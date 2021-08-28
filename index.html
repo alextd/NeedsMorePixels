@@ -163,7 +163,7 @@ function findScale()
 }
 
 
-img.src = 'http://pixel.nymag.com/imgs/daily/vulture/2016/08/11/11-obama-sex-playlist.w529.h529.jpg';
+img.src = 'http://www.councilofelrond.com/albums/album13/C_One_01.jpg';
 
 function pixelateCur()		{	pixelate(slider.value)}
 function pixelate(x) {
@@ -176,18 +176,28 @@ function pixelate(x) {
 	}
 
 	var pixelatedH = 6-x+x*x,
-	    pixelatedW = w * pixelatedH/h;
+	    pixelatedW = w * pixelatedH/h,
+			blur = h/pixelatedH/4;
 	if(h>w)
 	{
 		//taller than square
-		pixelatedW = 6-x+x*x,
-		pixelatedH = h * pixelatedW/w;
+		pixelatedW = 6-x+x*x
+		pixelatedH = h * pixelatedW/w
+		blur = w/pixelatedW/4;
 	}
 	
-	setSmooth(true);//Smoother down-sampling for more consistent coloring I think
-	// draw original image to the scaled size
+	// draw original image, blurred
+	// TODO: This should be its own context/image data?
+	ctx.drawImage(img, 0, 0, w, h);//Draw it first so the blurred-out edges have a colorful backdrop
+	ctx.filter = `blur(${blur}px)`;//TODO omg safari doesn't support this.
+	ctx.drawImage(img, 0, 0, w, h);
+	ctx.filter = 'blur(0px)';
+	
+	// draw to the scaled size
 	// Minor stretching from ceil() shouldn't be noticable with the pixelation
-	ctx.drawImage(img, dx, dy, Math.ceil(pixelatedW), Math.ceil(pixelatedH))
+	setSmooth(true);//Smooth down-scaling
+	ctx.drawImage(canvas, 0, 0, w, h, 0, 0, Math.ceil(pixelatedW), Math.ceil(pixelatedH))
+	
 	
 	setSmooth(false);//Pixelated up-scaling
 	
@@ -197,7 +207,11 @@ function pixelate(x) {
 
 	// then draw that scaled image thumb back to fill canvas
 	// As smoothing is off the result will be pixelated
-	ctx.drawImage(canvas, dx+nudgeX, dy+nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
+	ctx.drawImage(canvas, nudgeX, nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
+	
+	// Clear out the working area
+	ctx.clearRect(0, 0, canvas.width, dy);
+	ctx.clearRect(0, 0, dx, canvas.height);
 }
 
 URLGO = function() {
