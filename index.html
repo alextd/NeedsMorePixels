@@ -99,8 +99,9 @@ img.onload = start;
 window.addEventListener('resize', resizeCanvas, false);
 			
 function resizeCanvas() {
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	canvas.width = window.innerWidth*8;//Mobile scales pixels down so we scale this up so full-res image is closer to correct.
+	canvas.height = window.innerHeight*8;
+	canvas.style = `width: ${window.innerWidth}px;  height: ${window.innerHeight}px`;
 
 	xsize.innerHTML = canvas.width
 	ysize.innerHTML = canvas.height
