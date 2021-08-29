@@ -72,7 +72,6 @@ canvas {
 
 	Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
 	</p>
-	<text id="xsize"></text>x<text id="ysize"></text> pixels! Ratio = <text id="ratio"></text>
 	</center>
 </div>
 <script>
@@ -80,9 +79,6 @@ var url = document.getElementById("urlIn");
 var file = document.getElementById("fileIn");
 var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
-var xsize = document.getElementById('xsize');
-var ysize = document.getElementById('ysize');
-var ratio = document.getElementById('ratio');
 
 addEventListener("load", function() {
     window.scrollTo(1, 0);
@@ -99,13 +95,10 @@ img.onload = start;
 window.addEventListener('resize', resizeCanvas, false);
 			
 function resizeCanvas() {
-	canvas.width = window.innerWidth*8;//Mobile scales pixels down so we scale this up so full-res image is closer to correct.
-	canvas.height = window.innerHeight*8;
-	canvas.style = `width: ${window.innerWidth}px;  height: ${window.innerHeight}px`;
-
-	xsize.innerHTML = canvas.width
-	ysize.innerHTML = canvas.height
-	ratio.innerHTML = window.devicePixelRatio || 1
+	canvas.width = window.innerWidth*window.devicePixelRatio;//Mobile scales pixels down so we scale this up so full-res image is closer to correct.
+	canvas.height = window.innerHeight*window.devicePixelRatio;
+	canvas.style.width = window.innerWidth + "px";
+	canvas.style.height = window.innerHeight + "px";
 
 	findScale();
 	pixelateCur(); 
