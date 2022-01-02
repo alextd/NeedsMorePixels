@@ -63,6 +63,7 @@ canvas {
 	<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
 	<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
 	<button onclick="URLGO()">GO</button><br>
+	<button onclick="start()">RESTART</button><br>
 	<h1>Needs More Pixels</h1>
 	<p style="white-space: pre-line">
 	(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
@@ -117,12 +118,11 @@ function setSmooth(on)
 
 function start()
 {
+	slider.value = 1;
   document.body.scrollTop = 0; // For Safari
   document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 	
 	resizeCanvas();
-	findScale();
-	pixelateFirst();
 }
 //img.onerror = function() {console.log("err")}//Still spams console oh well
 //img.onabort = function() {console.log("abort")}
@@ -156,7 +156,7 @@ function findScale()
 }
 
 
-img.src = 'http://www.councilofelrond.com/albums/album13/C_One_01.jpg';
+img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Mount_Rushmore_Closeup_2017.jpg/1024px-Mount_Rushmore_Closeup_2017.jpg';
 
 function pixelateCur()		{	pixelate(slider.value)}
 function pixelate(x) {
