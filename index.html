@@ -75,17 +75,31 @@ canvas {
 	<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
 	<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
 	<button onclick="URLGO()">GO</button><br>
-	<button onclick="restart()">RESTART</button><br>
+	<button onclick="restart()">Restart</button><br>
 	<h1>Needs More Pixels</h1>
-	<p style="white-space: pre-line">
 	(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
+	<p style="white-space: pre-line">
 	Click image to step to the next clearer image.
+	Use the slider bar beneath image to select image clarity.
 	Arrow keys also work: up to start, down to end, left/right step one by one.
-	Select a local image, or paste a URL to play new game.
-
-	Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
-	<button onclick="reset()">RESET WELCOME BANNER</button><br>
+	
+	Select a local image, or paste a URL to play a new game.
 	</p>
+	</center>
+	
+	<p style="white-space: pre-line">
+	For optimal mobile party experience:
+	1. Share the URL with everyone
+	2. Save this page to your home screen (to run without browser UI getting in the way)
+	3. Keep phone horizontal
+	4. Select image
+	5. Display to your TV for everyone to see
+	
+Known issues:
+Sometimes the image scales badly (when run from the home screen, after rotating the phone). Rather than fix that, there is a Restart button to re-align the image.
+The last few pixelizations are slow. (ez code made for slow code)
+	</p>
+	<button onclick="reset()">RESET WELCOME BANNER</button><br>
 	</center>
 </div>
 <script>
@@ -100,7 +114,7 @@ var icanvas = document.createElement("canvas");
 
 function killTutorial()
 {
-	document.body.removeChild(document.getElementById("tutorial"));
+	document.getElementById("tutorial").style = 'display: none;';
 	document.cookie = "OK=OK";
 }
 function reset()
@@ -220,9 +234,11 @@ function averagePixel(imgData)
 	var r=0, g=0, b=0, a=0;
 	var d = imgData.data;
 	
-	//TODO: Sample some, not all.
+	//TODO: Sample some, not all. If that's faster.
 	for(var i=0;i<d.length;i+=4)
 	{
+		//todo if transparent and within bounds, lower total transparency
+		//probably need to crop imgData to image bounds for that
 		if(d[i+3] > 0)
 		{
 			//If not transparent, add to totals
@@ -281,11 +297,11 @@ function pixelate(i) {
 	//setPixelXY(tinyData, 3,3, [0,255,0,255]); // a green pixel
 		
 
-	// then draw that scaled image thumb back to fill canvas
-	// As smoothing is off the result will be pixelated
-	//ctx.drawImage(icanvas, 0, 0, iw, ih, 0, 0, iw, ih);
+	//ctx.drawImage(icanvas, 0, 0, iw, ih, 0, 0, iw, ih);//debug see what's going on
 	ctx.putImageData(tinyData, 0,0);
 	
+	// then draw that scaled image thumb back to fill canvas
+	// As smoothing is off the result will be pixelated
 	setSmooth(false);//Pixelated up-scaling
 	ctx.drawImage(canvas, nudgeX, nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
 	
