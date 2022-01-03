@@ -45,6 +45,13 @@ canvas {
 .container img:hover {
   opacity:0;
 }
+
+#close {
+    float:right;
+    display:inline-block;
+    padding:2px 5px;
+    background:#ccc;
+}
     </style>
 </head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
@@ -54,6 +61,11 @@ canvas {
 
 
 <body>
+
+<div id = "tutorial" style="display: none;">
+	<span id='close' onclick='killTutorial()'>x</span>
+	<center>Welcome to Needs More Pixels.<br>Scroll down for more info.</center>
+</div>
 <div>
 	<center>
 	<div class="container">
@@ -63,7 +75,7 @@ canvas {
 	<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
 	<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
 	<button onclick="URLGO()">GO</button><br>
-	<button onclick="start()">RESTART</button><br>
+	<button onclick="restart()">RESTART</button><br>
 	<h1>Needs More Pixels</h1>
 	<p style="white-space: pre-line">
 	(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
@@ -72,15 +84,30 @@ canvas {
 	Select a local image, or paste a URL to play new game.
 
 	Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
+	<button onclick="reset()">RESET WELCOME BANNER</button><br>
 	</p>
 	</center>
 </div>
 <script>
+if(document.cookie == "")
+	document.getElementById("tutorial").style = "";
+
 var url = document.getElementById("urlIn");
 var file = document.getElementById("fileIn");
 var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
 var icanvas = document.createElement("canvas");
+
+function killTutorial()
+{
+	document.body.removeChild(document.getElementById("tutorial"));
+	document.cookie = "OK=OK";
+}
+function reset()
+{
+	document.cookie = 'OK=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+}
+
 
 addEventListener("load", function() {
     window.scrollTo(1, 0);
@@ -135,6 +162,11 @@ function start()
   document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 	
 	resizeCanvas();
+}
+function restart()
+{
+	killTutorial();
+	start();
 }
 //img.onerror = function() {console.log("err")}//Still spams console oh well
 //img.onabort = function() {console.log("abort")}
@@ -263,13 +295,17 @@ function pixelate(i) {
 }
 
 URLGO = function() {
+	killTutorial();
+	
 	img.src = urlIn.value;
 	urlIn.value = "";
 }
 
 file.onchange = function(e) { 
- var tgt = e.target || window.event.srcElement;
- var files = tgt.files;
+	killTutorial();
+	
+	var tgt = e.target || window.event.srcElement;
+	var files = tgt.files;
 
 	// FileReader support
 	if (FileReader && files && files.length) {
