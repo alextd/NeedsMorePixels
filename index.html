@@ -80,6 +80,7 @@ var url = document.getElementById("urlIn");
 var file = document.getElementById("fileIn");
 var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
+var icanvas = document.createElement("canvas");
 
 addEventListener("load", function() {
     window.scrollTo(1, 0);
@@ -88,6 +89,7 @@ addEventListener("load", function() {
 // Chunks of this code:
 // (C) Ken Fyrstenberg, Epistemex, License: CC3.0-attr
 var ctx = canvas.getContext('2d'),
+		ictx = icanvas.getContext('2d'),
     img = new Image();
 // wait until image is actually available
 img.onload = start;
@@ -101,8 +103,11 @@ function resizeCanvas() {
 	canvas.style.width = window.innerWidth + "px";
 	canvas.style.height = window.innerHeight + "px";
 
-	findScale();
-	pixelateCur(); 
+	if(img.complete)
+	{
+		findScale();
+		pixelateCur(); 
+	}
 }
 
 
@@ -116,8 +121,15 @@ function setSmooth(on)
 	ctx.imageSmoothingEnabled = on;
 }
 
+var w =1, h=1, iw=1, ih=1;
 function start()
 {
+	iw = img.width; ih = img.height;
+	img.crossOrigin = "Anonymous";
+	icanvas.width = iw;	icanvas.height = ih;
+	ictx.clearRect(0, 0, iw, ih);//Because maybe transparency?
+	ictx.drawImage(img, 0, 0, iw, ih);
+	
 	slider.value = 1;
   document.body.scrollTop = 0; // For Safari
   document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
@@ -128,27 +140,24 @@ function start()
 //img.onabort = function() {console.log("abort")}
 
 //Figure out scaling:
-var w = canvas.width;
-var h = canvas.height;
+var w =1, h=1, iw=1, ih=1;
 var imScale = 1;
 var dx = 0, dy = 0;
 
 function findScale()
 {
-	w = img.width;
-	h = img.height;
-	if(w/h > canvas.width/canvas.height)
+	if(iw/ih > canvas.width/canvas.height)
 	{	//canvas is taller 
-		imScale = canvas.width/w;
-		h = Math.floor(h*imScale);
+		imScale = canvas.width/iw;
+		h = Math.floor(ih*imScale);
 		w = canvas.width;
 		dx = 0;
 		dy = Math.floor((canvas.height-h)/2);
 	}
 	else
 	{ //image is taller
-		imScale = canvas.height/h;
-		w = Math.floor(w*imScale);
+		imScale = canvas.height/ih;
+		w = Math.floor(iw*imScale);
 		h = canvas.height;
 		dy = 0;
 		dx = Math.floor((canvas.width-w)/2);
@@ -158,48 +167,94 @@ function findScale()
 
 img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Mount_Rushmore_Closeup_2017.jpg/1024px-Mount_Rushmore_Closeup_2017.jpg';
 
+//Edit the image:
+function getPixel(imgData, index) {
+  return imgData.data.slice(index*4, index*4+4) // [R,G,B,A]
+}
+
+function getPixelXY(imgData, x, y) {
+  return getPixel(imgData, y*imgData.width+x);
+}
+
+function setPixel(imgData, index, pixelData /*[R,G,B,A]*/) {
+  imgData.data.set(pixelData, index*4)
+}
+
+function setPixelXY(imgData, x, y, p/*[R,G,B,A]*/) {
+  return setPixel(imgData, y*imgData.width+x, p);
+}
+function averagePixel(imgData)
+{
+	var r=0, g=0, b=0, a=0;
+	var d = imgData.data;
+	
+	//TODO: Sample some, not all.
+	for(var i=0;i<d.length;i+=4)
+	{
+		if(d[i+3] > 0)
+		{
+			//If not transparent, add to totals
+			r += d[i];
+			g += d[i+1];
+			b += d[i+2];
+		}
+		a += d[i+3];//But do track all transparancy
+	}
+	
+	var count = a/255;//Sum of transparencies, 0-1
+	return [Math.floor(r/count), Math.floor(g/count), Math.floor(b/count), 255]
+}
+
 function pixelateCur()		{	pixelate(slider.value)}
-function pixelate(x) {
+function pixelate(i) {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if(x == 10)
+	if(i == 10)
 	{
 		setSmooth(true);
-		ctx.drawImage(img, dx, dy, img.width*imScale, img.height*imScale);
+		ctx.drawImage(img, dx, dy, iw*imScale, ih*imScale);
 		return;
 	}
-
-	var pixelatedH = 6-x+x*x,
+	
+	var pixelatedH = 6-i+i*i,
 	    pixelatedW = w * pixelatedH/h,
-			blur = h/pixelatedH/4;
+			pixelSize = ih/pixelatedH;
 	if(h>w)
 	{
 		//taller than square
-		pixelatedW = 6-x+x*x
+		pixelatedW = pixelatedH//6-i+i*i
 		pixelatedH = h * pixelatedW/w
-		blur = w/pixelatedW/4;
+		pixelSize = iw/pixelatedW;
 	}
-	
-	// draw original image, blurred
-	// TODO: This should be its own context/image data?
-	ctx.drawImage(img, 0, 0, w, h);//Draw it first so the blurred-out edges have a colorful backdrop
-	ctx.filter = `blur(${blur}px)`;//TODO omg safari doesn't support this.
-	ctx.drawImage(img, 0, 0, w, h);
-	ctx.filter = 'blur(0px)';
-	
-	// draw to the scaled size
-	// Minor stretching from ceil() shouldn't be noticable with the pixelation
-	setSmooth(true);//Smooth down-scaling
-	ctx.drawImage(canvas, 0, 0, w, h, 0, 0, Math.ceil(pixelatedW), Math.ceil(pixelatedH))
-	
-	
-	setSmooth(false);//Pixelated up-scaling
-	
+	var pixelC = Math.floor(pixelSize/2)
+			
 	//Nudge for a tiny pixel overflow
 	var nudgeX = pixelatedW%1 > 0 ? (1-(pixelatedW%1))/2 : 0
 	var nudgeY = pixelatedH%1 > 0 ? (1-(pixelatedH%1))/2 : 0
+	
+	//tiny Image 
+	//Math.ceil for tiny image to draw an extra pixel on longer axis, later will nudge to center
+	var tinyData = ctx.getImageData(0,0,Math.ceil(pixelatedW), Math.ceil(pixelatedH));
+	
+	//setPixelXY(tinyData, 2,2, [255,0,0,255]); // a red pixel
+			
+	for(var x=0;x<Math.ceil(pixelatedW);x++)
+		for(var y=0;y<Math.ceil(pixelatedH);y++)
+		{
+			px = Math.floor(pixelSize*(x-nudgeX));
+			py = Math.floor(pixelSize*(y-nudgeY));
+			
+			//todo lots of getImageData seems slow.
+			setPixelXY(tinyData, x, y, averagePixel(ictx.getImageData(px, py,pixelSize, pixelSize)));
+		}
+	//setPixelXY(tinyData, 3,3, [0,255,0,255]); // a green pixel
+		
 
 	// then draw that scaled image thumb back to fill canvas
 	// As smoothing is off the result will be pixelated
+	//ctx.drawImage(icanvas, 0, 0, iw, ih, 0, 0, iw, ih);
+	ctx.putImageData(tinyData, 0,0);
+	
+	setSmooth(false);//Pixelated up-scaling
 	ctx.drawImage(canvas, nudgeX, nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
 	
 	// Clear out the working area
@@ -284,10 +339,6 @@ function pixelateFirst()	{	slider.value = 1;pixelateCur()}
 function pixelateLast()		{	slider.value = 10;pixelateCur()}
 function pixelatePrev()		{	slider.value --;pixelateCur()}
 function pixelateNext()		{	slider.value ++ ;pixelateCur()}
-
-
-
-resizeCanvas();
 </script>
 </body>
 </html>
