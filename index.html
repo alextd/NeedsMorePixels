@@ -97,7 +97,6 @@ canvas {
 	
 Known issues:
 Sometimes the image scales badly (when run from the home screen, after rotating the phone). Rather than fix that, there is a Restart button to re-align the image.
-The last few pixelizations are slow. (ez code made for slow code)
 	</p>
 	<button onclick="reset()">RESET WELCOME BANNER</button><br>
 	</center>
@@ -130,7 +129,7 @@ addEventListener("load", function() {
 // Chunks of this code:
 // (C) Ken Fyrstenberg, Epistemex, License: CC3.0-attr
 var ctx = canvas.getContext('2d'),
-		ictx = icanvas.getContext('2d'),
+		ictx = icanvas.getContext('2d'), d,	//image data array in d
     img = new Image();
 // wait until image is actually available
 img.onload = start;
@@ -166,10 +165,13 @@ var w =1, h=1, iw=1, ih=1;
 function start()
 {
 	iw = img.width; ih = img.height;
-	img.crossOrigin = "Anonymous";
+	img.crossOrigin = "Anonymous";//apparently you can't just read image data from other sites
+	
+	//apparently you can't get image data from img, but can from drawing onto a canvas
 	icanvas.width = iw;	icanvas.height = ih;
 	ictx.clearRect(0, 0, iw, ih);//Because maybe transparency?
 	ictx.drawImage(img, 0, 0, iw, ih);
+	d = ictx.getImageData(0,0,iw, ih).data;
 	
 	slider.value = 1;
   document.body.scrollTop = 0; // For Safari
@@ -229,28 +231,40 @@ function setPixel(imgData, index, pixelData /*[R,G,B,A]*/) {
 function setPixelXY(imgData, x, y, p/*[R,G,B,A]*/) {
   return setPixel(imgData, y*imgData.width+x, p);
 }
-function averagePixel(imgData)
+
+function averagePixel(px, py, pc)//pixel px -> px+pc
 {
 	var r=0, g=0, b=0, a=0;
-	var d = imgData.data;
+	var count = 0;
 	
-	//TODO: Sample some, not all. If that's faster.
-	for(var i=0;i<d.length;i+=4)
+	for(var y=py ; y < py+pc*2 ; y++)
 	{
-		//todo if transparent and within bounds, lower total transparency
-		//probably need to crop imgData to image bounds for that
-		if(d[i+3] > 0)
+		if(y<0 || y>=ih)
+			continue;
+		var yindex = y*iw*4;
+		for(var x=px ; x < px+pc*2 ; x++)
 		{
-			//If not transparent, add to totals
-			r += d[i];
-			g += d[i+1];
-			b += d[i+2];
+			if(x<0 || x>=iw)
+				continue;
+				
+			var index = yindex+x*4;
+			
+			
+			//console.log(px, py,x, y,pixel)
+			if(d[index+3] > 0)
+			{
+				//If not transparent, add to totals
+				r += d[index];
+				g += d[index+1];
+				b += d[index+2];
+			}
+			a += d[index+3];//But do track all transparancy
+			count++;
 		}
-		a += d[i+3];//But do track all transparancy
 	}
 	
-	var count = a/255;//Sum of transparencies, 0-1
-	return [Math.floor(r/count), Math.floor(g/count), Math.floor(b/count), 255]
+	var acount = a/255;//Sum of transparencies, 0-1
+	return [Math.floor(r/acount), Math.floor(g/acount), Math.floor(b/acount), Math.floor(a/count)];
 }
 
 function pixelateCur()		{	pixelate(slider.value)}
@@ -284,15 +298,14 @@ function pixelate(i) {
 	var tinyData = ctx.getImageData(0,0,Math.ceil(pixelatedW), Math.ceil(pixelatedH));
 	
 	//setPixelXY(tinyData, 2,2, [255,0,0,255]); // a red pixel
-			
+//	for(var x=0;x<1;x++)
+//		for(var y=0;y<1;y++)
 	for(var x=0;x<Math.ceil(pixelatedW);x++)
 		for(var y=0;y<Math.ceil(pixelatedH);y++)
 		{
 			px = Math.floor(pixelSize*(x-nudgeX));
 			py = Math.floor(pixelSize*(y-nudgeY));
-			
-			//todo lots of getImageData seems slow.
-			setPixelXY(tinyData, x, y, averagePixel(ictx.getImageData(px, py,pixelSize, pixelSize)));
+			setPixelXY(tinyData, x, y, averagePixel(px, py, pixelC));
 		}
 	//setPixelXY(tinyData, 3,3, [0,255,0,255]); // a green pixel
 		
